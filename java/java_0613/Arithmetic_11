@@ -1,0 +1,22 @@
+package java_0613;
+
+public class Arithmetic_11
+{
+	public static void main(String[] args) 
+	{
+      int sum = 15, sub =10, mul =6, div = 56, res=60;
+	  sum+= sub; // sum = sum+10
+	  sub-= 6;//sub = sub-6
+	  mul *= 4;//mul = mul*4
+	  div/= 7;//div= div/7
+	  res%=7;
+	  
+	  System.out.println("sum ="+sum);
+	  System.out.println("sub ="+sub);
+	  System.out.println("mul ="+mul);
+	  System.out.println("div ="+div);
+       System.out.println("res ="+res);
+
+		System.out.println("Hello World !");
+	}
+}
