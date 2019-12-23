@@ -1,0 +1,19 @@
+package java_0614;
+
+public class Cast_1
+{
+	public static void main(String[] args) 
+	{
+		byte bb ;
+		int ii  =365;
+		double dd = 1524.512;
+		System.out.println("����� ��ȯ ���");
+		bb = (byte)ii;
+		System.out.println("int�� 365�� byte������ �ٲٸ� : "+bb);
+		ii = (int)dd;
+		System.out.println("double�� 1024.512�� int������ �ٲٸ� : "+ii);
+        bb = (byte)dd;
+		System.out.println("double�� 1024.512�� byte������ �ٲٸ� : "+bb);
+		System.out.println("Hello World !");
+	}
+}
