@@ -1,0 +1,27 @@
+package java_0626;
+
+public class ArrayTest {
+	
+	public static void main(String[] args) {
+		
+		int[] x = {55,77,333};  //  new int �� ���� ���� / �迭�� ��ü�̹Ƿ� heap ������ �����.
+		
+		 
+		System.out.println("main()1 : x = " + x[0]);
+		
+		change(x);  //  x��� ��ü�� �迭. �ּҰ��� ���� ��.
+		
+		System.out.println("After change(x) ");
+		System.out.println("main()2 : x = " + x[2]);  //  �迭�� ��ü�� ������ ���� ���� �����ϰ� �ֱ� ������ ���� �ٲ� �� ����.
+		
+	}
+	
+	
+	static void change(int[] yy)    //  ������� ���� �����ϰ� �ִ�.
+	{
+		yy[2] = 456789;
+		System.out.println("change() : yy[0] = " + yy[2]);
+	}
+	
+
+}
