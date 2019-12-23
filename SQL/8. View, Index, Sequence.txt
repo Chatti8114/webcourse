@@ -1,0 +1,449 @@
+8. View, Index, Sequence
+
+가. 뷰(View)
+  1) 정의
+  테이블에 대한 가상의 테이블로써 테이블처럼 직접 데이터를 소유하지 않고
+  검색시에 이용할 수 있도록 정보를 담고 있는 객체. 테이블 정보의 부분집합.
+  
+  2) 사용 목적
+   가) 테이블에 대한 보안 기능을 설정해야 하는 경우
+   나) 복잡하며 자주 사용하는 질의SQL문을 보다 쉽고 간단하게 사용해야
+       하는 경우.
+	  
+  3) 뷰 생성 권한 부여
+    cmd 모드에서   sqlplus / as sysdba
+   가) grant create view to 계정이름; --hr계정에 대해 권한부여
+       ex) grant create view to hr;
+   나) revoke create view from 계정이름; --권한회수
+   다) SELECT * FROM DBA_SYS_PRIVS WHERE GRANTEE = '계정이름'
+   
+  4) 뷰 생성
+    create view test_v
+	as
+	select * from emp;
+	
+	-- 또다시 똑같은 명령어로 만들면 에러 
+	--ORA-00955: name is already used by an existing object
+  
+  5) 뷰생성 및 수정하기 : create or replace
+    (형식)
+	create or replace view [force | noforce] 뷰이름 (컬럼리스트)
+	as [쿼리]
+	-- replace : 이미 존재하는 뷰의 내용을 수정함.
+	create or replace view test_v
+	as
+	select * from emp;
+	
+  6) 뷰 삭제하기 : drop view 뷰이름
+    drop view test_v;
+	
+  7) 실습
+    -- 뷰 생성
+	create or replace view test_view
+	as
+	select empno, ename, e.deptno, dname
+	from emp e, dept d --조인대상 테이블
+	where e.deptno = d.deptno; --조인 조건
+	
+	-- 생성된 뷰는 테이블처럼 사용 가능
+	select * from test_view;
+	
+	--위 뷰와 같은 결과
+	select empno, ename, e.deptno, dname
+	from emp e, dept d --조인대상 테이블
+	where e.deptno = d.deptno; --조인 조건
+	
+	-- 테이블인지 뷰인지 확인
+	select * from tab;
+	
+	-- 뷰의 세부 정보 확인(데이터 사전)
+	select * from user_views;
+	
+	-- 뷰 생성
+	create or replace view emp_v
+	as
+	select empno, ename, hiredate, sal from emp;
+	
+	insert into emp_v values (8000, 'kim', sysdate, 700);
+	
+	select * from emp_v;
+	
+	delete from emp_v where empno=8000;
+	
+	-- 테이블이 한 개일 때는 괜찮으나 두 개이상 조인이 들어가면 뷰에서는
+	문제가 생긴다.
+	-- 뷰에 레코드 입력(가능하나 권장하지 않음)
+	-- 뷰의 주용도 select
+	
+	-- 뷰삭제
+	drop view emp_v;
+	
+	-- 뷰 생성
+	create or replace view emp_v
+	as
+	select empno, ename, hiredate, sal from emp;
+	with read only; --읽기 전용 뷰(대부분의 뷰)
+	
+	
+나. 색인(index)
+  1) 정의
+  테이블의 데이터를 보다 빠르게 검색할 수 있도록 지원해주는 객체
+  
+  2) 구성요소
+  -- rowid(레코드 주소값), 색인 컬럼값
+  select rowid, empno, ename from emp;
+  
+  3) index 생성
+  -- create index 인덱스명 on 테이블명(컬럼명...);
+  -- Primary Key, Unique 제약조건을 만들면 해당 인덱스가 자동으로 생성됨
+  
+  create index c_emp_name_idx on c_emp(name);
+  
+  4) 삭제
+  -- drop index 인덱스명;
+  drop index c_emp_name_idx;
+  
+  5) 인덱스 실습
+  
+  -- full scan : 모든 레코드를 검사
+  -- index unique scan : 유일한 값(pk,un 등에 index를 붙일 때)
+  -- index range scan : 유일하지 않은 값(동명이인이 있을 수 있는
+     이름데이터가 들어가는 컬럼에 index를 붙일 때)
+  -- primary key에는 인덱스가 자동으로 생성됨
+  -- 인덱스를 사용한 검사(rowid를 사용하여 점프하여 바로 검사)
+  
+  select empno, ename from emp where empno=7900;
+  -- F10 실행계획(계획설명)
+  
+  select empno, ename from emp where ename='송기성';
+  
+  -- 인덱스 추가
+  create index emp_ename_idx on emp(ename);
+  
+  -- 인덱스 제거
+  drop index emp_ename_idx;
+  
+  -- 인덱스 테스트를 위한 테이블 생성된
+  create table emp3 (
+  no number,
+  name varchar2(10),
+  sal number
+  );
+  
+  --PL/SQL (Procedural Language)
+  
+  
+declare 
+i number := 1;
+name varchar(20) := 'kim';
+sal number := 0;
+begin
+while i < 1000000 loop
+if i mod 2 = 0 then
+name := 'kim' || to_char(i);
+sal := 300;
+elsif i mod 3 = 0 then
+name := 'park' || to_char(i);
+
+sal := 400;
+elsif i mod 5 = 0 then
+name := 'hong' || to_char(i);
+sal := 500;
+else
+name := 'shin' || to_char(i);
+sal := 250;
+end if; 
+insert into emp3 values (i,name,sal); 
+i := i + 1; 
+end loop; 
+end;
+/
+
+commit;
+
+--레코드 확인
+select count(*) from emp;
+
+--인덱스를 사용하지 않을 경우:
+select * from emp3;
+
+select * from emp3 where name='shin691' and sal > 200;
+
+--인덱스 추가
+create index emp_name_idx on emp3(name,sal);
+
+select * from emp3 where name='shin691' and sal > 200;
+--인덱스 처리 후 코스트가 낮아짐
+
+--데이터사전에서 인덱스 정보 확인
+-- nonunique index : 중복값이 있는 인덱스
+-- unique index : primary key, unique 제약조건 컬럼에 적용
+select * from user_indexes where table_name='EMP3';--객체이름은 대문자
+
+--인덱스 제거
+drop index emp_name_idx;
+
+--테이블 생성 
+--primary key는 인덱스가 자동으로 생성
+create table emp4(
+no number primary key,
+name varchar2(10)
+sal number
+);
+
+select * from user_indexes where table_name='EMP4';
+select * from emp3;
+select * from emp3 where no>900000;
+
+--no 컬럼에 primary key 설정
+--alter table 테이블명 add constraint 제약조건이름 제약조건(컬럼);
+alter table emp3 add constraint emp3_no_pk primary key(no);
+
+select * from emp3 where no>900000;
+
+--primary key 제약조건 제거(인덱스 제거)
+alter table emp3 drop constraint emp3_no_pk;
+
+-- 인덱스를 사용할 경우 order by를 안해도 자동정렬
+
+--복합인덱스 생성
+create index emp_name_idx on emp3(name,sal);
+
+--복합인덱스는 and연산에서는 사용 가능, or 연산에서는 사용하지 않음
+select * from emp3 where name like 'park1111%' and sal > 300;
+--and 연산자는 앞이 false면 뒤에 것을 검사안함 (f && t = f)
+
+
+select * from emp3 where name like 'park1111%' or sal > 300;
+--or 연산은 앞이 false면 뒤에것도 검사해야함, 따라서 복합인덱스는
+   or연산에는 사용 안함. (f || t = t)
+   
+   
+다. 시퀀스(Sequence)
+  1) 정의
+    연속적인 숫자값을 자동으로 증가시키는 숫자를 발생시키는 객체
+	( 예) 은행 번호표처럼 후진은 안됨), mySQL의 auto_increment와 같은기능
+
+  2) 생성
+    create sequence 시퀀스이름
+    [increment by 숫자]
+    [start with 숫자]
+    [maxvalue 숫자]
+    [minvalue 숫자]
+	[cycle | nocycle] -- 일련번호 순환 여부(1~10, 1~10,...계속순환)
+	[cache | nochach] -- 빠른 처리를 위해 시퀀스의 값을 메모리에 저장, 단,
+	cache를 사용하면 서버를 껐다 키는 등의 일을 하면 100번까지 발급되었다가
+	다음 101번부터 발급
+	
+	create sequence c_emp_seq
+	increment by 1
+	start with 103
+	maxvalue 1000
+	nocache
+	nocycle;
+
+	
+  3) 시퀀스 호출 함수 (주의 : 시퀀스 생성 후 nextval을 호출해야 시퀀스에
+    초기 값이 설정됨)
+	가) nextval : 다음값을 반환함
+	select c_emp_seq.nextval from dual;
+	
+	나) currval : 현재값을 반환함
+	select c_emp_seq.currval from dual;
+	
+  4) 사용 예
+    insert into c_emp values(
+	c_emp_seq.nextval, 'aaa', 1000, '3429-001',10);
+	
+	--서브쿼리를 사용하여 id 필드에 값을 설정됨
+	-- nvl(A, A가 null일때의 값)
+	select nvl(max(id)+1, 1) from c_emp;
+	
+	insert into c_emp values ((select nvl(max(id)+1, 1) from c_emp), 
+	'test', 3000, '3429-0000', 10);
+	
+  5) 시퀀스 실습
+    -- 기존 시퀀스 삭제
+	drop sequence c_emp_seq;
+	
+	-- 1부터 시작, 1씩 증가, 최대값 100000, 캐쉬 사용 안함, 순환 안함
+	create sequence c_emp_seq
+	start with 1
+	increment by 1
+	maxvalue 100000
+	nocache
+	nocycle;
+	
+	--시퀀스.nextval : 다음 번호 발급
+	--시퀀스.currval : 현재 번호 확인
+	--dual : 가상 테이블
+	
+	select c_emp_seq.nextval from dual;
+	select c_emp_seq.currval from dual;
+	select * from c_emp;
+	
+	delete from c_emp;
+	
+	--시퀀스를 사용하여 사번 자동 부여, 시퀀스번호 변경은 불가, drop후
+	다시 작업
+	insert into c_emp values(c_emp_seq.nextval, 'park', 
+	4000, '010-2222-4444', 10);
+	
+	delete from c_emp where id=5;
+	
+	--서브쿼리를 활용한 번호 발급, (장점 : 시퀀스를 만들지 않아도 되고,
+	다른 DB에도 쓸 수 있다)
+	select max(id)+1 from c_emp; --최근에 발급된 사번에 +1
+	
+	insert into c_emp values((select max(id)+1 from c_emp), 'kim8', 
+	3000, '010-3333-5555', 10);
+	
+	delete from c_emp;
+	select max(id)+1 from c_emp;
+	
+	--따라서 레코드가 하나도 없을땐 문제가 된다. 이를 해결하기 위해
+	nvl함수를 쓴다.
+	select nvl(max(id)+1,1) from c_emp;
+	
+	insert into c_emp values((select nvl(max(id)+1,1) from c_emp), 
+	'kim10', 4000, '010-1010-1010', 10);
+	insert into c_emp values((select nvl(max(id)+1,1) from c_emp), 
+	'kim11', 5000, '010-1111-1111', 10);
+	insert into c_emp values((select nvl(max(id)+1,1) from c_emp), 
+	'kim12', 6000, '010-1212-1212', 10);
+	
+	delete from c_emp where name='kim8';
+	
+	--만약 중간에 서브쿼리로쓰다가 시퀀스로 쓰면 안된다. 그 반대도 
+	마찬가지임.
+	
+  6) 실습문제
+   가) 아래와 같은 테이블을 만들고 결과가 나오게 한다.
+   (단, sequence를 사용해서 id를 입력하되, id시작번호는 100번부터 1씩
+   증가시키며, maxvalue 1000까지로 설정. nocache,nocycle옵션 적용.
+   시퀀스 이름 test_member_seq)
+    
+   출력결과==========================
+   100	kim		4500	kim@gmail.com
+   101	lee		5000	lee@naver.com
+   102	park	6000	park@daum.net
+   
+   table이름 : test_member
+   id number primary key,
+   name varchar2(50) not null,
+   pay number,
+   email varchar2(50)
+   
+  D:\2강_융합SW\숙제\20190225 
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+  
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+
+
+   
+   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+  
+  
+	
+	  
+  
+

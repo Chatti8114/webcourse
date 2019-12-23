@@ -1,0 +1,272 @@
+7. 테이블과 제약조건
+
+가. 테이블
+1) 테이블 생성
+-- number(자리수) , 최대 38자리, number(전체자리수, 소수이하자리수)
+
+create table t_emp(
+id number(5) not null,
+name varchar2(25),
+salary number(7,2),
+phone varchar2(15),
+dept_name varchar2(25)
+);
+
+select * from tab;
+
+2) 테이블명 수정하기 : rename A to B
+rename t_emp to s_emp;
+
+3) 테이블에 데이터 입력
+insert into s_emp values(100, '이상헌', 2000, '010-222-3333', '개발부');
+insert into s_emp values(101, '최순철', 3000, '010-333-4444', '총무부');
+insert into s_emp values(102, '장혜숙', 4000, '010-444-5555', '영업부');
+insert into s_emp (id, name) values (300, '김철수');
+
+4) 테이블에 컬럼 추가 : alter table 테이블이름 add(컬럼이름 자료형)
+alter table s_emp add(hire_date date);
+
+5) 컬럼 수정 : phone의 varchar2(15) --> varchar2(20)
+alter table s_emp modify(phone varchar2(20));
+-- 작은값에서 큰값으로의 변경은 괜찮으나 반대는 문제가 생김
+**alter table s_emp modify(phone varchar2(10));
+
+6) 컬럼의 이름을 수정 : rename column A to B
+alter table s_emp rename column id to t_id;
+
+7) 컬럼 삭제 : alter table 테이블이름 drop column 컬럼이름
+alter table s_emp drop column dept_name;
+--alter는 트랜잭션의 대상이 아니기 때문에 복구할 수도 없다.
+
+8) 테이블 데이터 조작 : insert, update, delete
+
+ 가) hire_date에 값 입력
+ -- 아이디가 100인 레코드 수정
+    update s_emp set hire_date=sysdate
+	where t_id = 100;
+	
+ -- 입사일자가 입력되지 않은(null) 레코드 수정
+    update s_emp set hire_date=sysdate
+	where hire_date is null;
+	
+ 나) 새로운 데이터를 입력
+    insert into s_emp (t_id, hire_date) values(400, sysdate);
+	
+ 다) 데이터 삭제
+    delete from s_emp where t_id=400;
+	
+	
+문제) s_emp 테이블에서
+  가) e-mail을 관리하기 위한 mailid컬럼을 10byte로 추가
+  
+  
+  나) mailid 컬럼을 20byte로 수정
+  
+  
+  다) mailid 컬럼명 e_mail로 수정
+  
+  
+  라) s_emp 테이블명을 t_emp로 변경
+  
+
+
+나. 제약조건(constraint)
+  1) 정의
+    테이블의 해당 컬럼에 원치않는 데이터가 입력/변경/삭제되는 것을
+	방지하기 위해 테이블 생성시 또는 변경시 설정하는 조건
+	
+  2) 종류 
+     primary key, foreign key, 
+     unique(중복되지 않는, pk와 비슷하나 null을 허용),
+	 check(값의 범위 지정)
+	 not null(널 허용안함)
+	 
+  3) 제약조건을 반영한 테이블 생성
+     -- 사용방법 : constraint 제약조건이름 제약조건
+	 -- 제약조건이름을 명시안하면 시스템이 자동으로 이름을 부여한다.
+	 create table c_emp(
+	 id number(5) constraint c_emp_id_pk primary key,
+	 name varchar2(25) constraint c_emp_name_nn not null,
+	 salary number(7,2),
+	 phone varchar2(15) constraint c_emp_phone_ck 
+	 check(phone like '3429-%'),
+	 dept_id number(7) constraint c_emp_dept_id_fk 
+	 references dept(deptno)
+	 );
+	
+  4) 제약조건 이름 검색 (데이터 사전에서 검색됨)	
+  
+	 --해당 DB내의 제약조건의 이름을 볼때
+	 select constraint_name from user_constraints;
+	 
+	 --해당 테이블의 제약조건을 볼 때
+	 select * from user_constraints where table_name='C_EMP';
+	 --테이블 이름은 반드시 대문자로만 씀('C_EMP')
+	 
+	 
+	 --(참고)constraint_type
+	 P : Primary Key
+	 R : Foreign key
+	 U : Unique
+	 C : Check
+  
+  5) 제약조건은 수정할 수 없고 삭제만 가능함
+  alter table c_emp drop constraint c_emp_name_nn;
+  
+  6) 제약조건 추가하기
+  alter table c_emp add constraint c_emp_name_un unique(name);
+   
+  --(not null 제약조건은 add로 할 수없고 modify로 가능)
+  alter table c_emp modify(name varchar2(25) 
+  constraint c_emp_name_nn not null);
+ 
+  
+  7) 제약조건 활성화(enable)/비활성화(disable)
+  alter table c_emp disable constraint c_emp_name_nn;
+  
+  alter table c_emp enable constraint c_emp_name_nn;
+  
+  8) 제약조건의 삭제
+  alter table c_emp drop constraint c_emp_name_nn;
+  
+
+  9) 실습 (제약조건을 나중에 추가하는 방법)
+  drop table c_emp;
+  
+  1) --제약조건이 설정되지 않은 테이블
+     create table c_emp(
+	 id number(5),
+	 name varchar2(25),
+	 salary number(7,2),
+	 phone varchar2(15),
+	 dept_id number(7)
+	 );
+	 
+	 insert into c_emp (id,name) values (1, '김철수');
+	 insert into c_emp (id,name) values (1, '김기철');
+	 insert into c_emp (id,name) values (1, '김철수');
+	 
+	 delete from c_emp;
+	 
+	 -- id에 제약조건 부여(pk)
+	 alter table c_emp add constraint c_emp_id_pk primary key(id);
+	 --ORA-00001: unique constraint (HR.C_EMP_ID_PK) violated
+	 
+	-- 테이블 제거
+    drop table c_emp;
+
+    -- 테이블 생성시 제약조건 추가
+    (문졔) c_emp테이블에서 id컬럼에 제약조건이름은 c_emp_id_pk 추가
+	create table c_emp(
+	 id number(5)constraint c_emp_id_pk primary key,
+	 name varchar2(25),
+	 salary number(7,2),
+	 phone varchar2(15),
+	 dept_id number(7)
+	 );
+	 
+	2) -- check 제약조건
+	-- 테이블 제거
+    drop table c_emp;
+	
+	--check(입력값 체크 조건)
+	 create table c_emp(
+	 id number(5)constraint c_emp_id_pk primary key,
+	 name varchar2(25),
+	 salary number(7,2) constraint c_emp_salary_ck 
+	 check(salary between 100 and 1000),
+	 phone varchar2(15),
+	 dept_id number(7)
+	 );
+	 
+	 insert into c_emp (id,name,salary) values (1,'kim',500);
+	 insert into c_emp (id,name,salary) values (2,'park',1500);
+	 --ORA-02290: check constraint (HR.C_EMP_SALARY_CK) violated
+	 
+	3) -- Foreign key 제약조건
+	 -- 외래키, 외부키
+	 -- 다른 테이블의 PK를 참조
+	 
+	 select * from emp;
+	 select * from user_constraints where table_name='EMP';
+	 select * from user_constraints where table_name='DEPT';
+	 select * from dept;
+	 
+	 insert into emp (empno, ename, deptno) values (9999, '홍길동', 50);
+	 --ORA-02291: integrity constraint (HR.FK_DEPTNO) violated - parent key not found
+	 
+	 -- 테이블 제거
+    drop table c_emp;
+	 
+	(문제) dept_id 에 fk 제약조건 부여
+	create table c_emp(
+	 id number(5),
+	 name varchar2(25),
+	 salary number(7,2),
+	 phone varchar2(15),
+	 dept_id number(7) 
+	 constraint c_emp_dept_id_fk references dept(deptno)
+	 );
+	 
+	 insert into c_emp (id, name, dept_id) values (1, 'kim', 10);
+	 insert into c_emp (id, name, dept_id) values (2, 'park', 20);
+	 insert into c_emp (id, name, dept_id) values (3, 'park', 50);
+	 
+	4) unique 제약 조건 (null 혀용)
+    -- 참고) primary key : unique + not null
+	create table c_emp(
+	 id number(5),
+	 name varchar2(25) constraint c_emp_name_un unique,
+	 salary number(7,2),
+	 phone varchar2(15),
+	 dept_id number(7) 
+	 );
+	 insert into c_emp (id, name, dept_id) values (1, 'kim');
+	 insert into c_emp (id, name, dept_id) values (2, 'kim');
+	 
+	 
+종합문제) 테이블 이름 ex_emp 
+          id number(5)
+		  name varchar2(20)
+		  email varchar2(20)
+		  hp varchar2(20)
+		  sal number(5)
+		  addr1 varchar2(50)
+		  addr2 varchar2(50)
+		  dept_id number(7)
+		  
+		  **제약조건은 테이블생성시 작성하세요...
+		  hp에는 unique 제약조건
+		  id에는 pk 제약조건
+		  sal은 급여가 100~2000까지만 입력될 수 있도록 check 제약조건
+		  dept_id는 dept테이블의 deptno와의 fk 제약조건을 설정
+  
+D:\2강_융합SW\숙제\20190222\이름\20190222.sql
+ 
+  
+  
+  
+  
+  
+  
+	
+	
+	
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

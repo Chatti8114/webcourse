@@ -1,0 +1,201 @@
+5. 트랜잭션과 그룹쿼리
+
+가) 트랜잭션(Transaction)
+  1) 정의
+    가. 분리되어서는 안되는 (논리적인) 작업단위
+	나. 데이터베이스 내에서 한꺼번에 수행되어야 할 일련의 연산들
+  2) 트랜잭션은 한꺼번에 완료가 되거나 한꺼번에 취소가 되어야함(원자성)
+  3) TCL(Transaction Control Language : 트랜잭션 제어어)
+     DML문이 실행되어 DB에 저장되거나(commit) 되돌리기(rollback) 위해서
+	 실행해야 하는 SQL문
+	 가) commit : SQL문의 결과를 영구적으로 DB에 반영하는 SQL문
+	 나) rollback : SQL문의 결과를 이전 transaction의 끝부분까지 취소하는
+	     SQL문
+	 다) savepoint : transaction의 한 지점을 표시하는 임시 저장점
+  4) 예)
+     create table dep (
+	 id varchar2(10) primary key,
+	 name varchar2(15) not null,
+	 location varchar2(50)
+	 );
+	 
+	 insert into dep values('10', '영업부', '서울 강남구');
+	 savepoint a;
+	 insert into dep values('20', '회계부', '부산 동래구');
+	 savepoint b;
+	 insert into dep values('30', '개발부', '인천 계양구');
+	 
+	 rollback to a;--a지점까지만
+	 
+	 commit;
+	 
+  5) 실수로 커밋한 자료의 복구 방법
+     sqlplus, sql develope에서 실행
+	 (java/java1234 계정으로 접속)
+	 show parameter undo;
+	 
+	 undo_retention : delete, update 후에 commit을 했을 때부터 속성값의
+	 시간(초)까지는 오라클에서 임시로 저장한 데이터로 복구할 수 있음.
+	 Default 속성값은 '900'으로 900/60초 = 15분
+	 commit 후 15분 이내에는 데이터를 복구할 수 있음
+	 그 시간을 25분(1500초)으로 늘리려면
+	 alter system set undo_retention = 1500;
+	 
+	 select * from tab;
+	 
+	 select * from member;
+	 
+	 delete from member where userid='park';
+	 commit;
+	 
+	 --삭제된 레코드 확인
+	 select * from member as of timestamp(systimestamp-interval '15'minute)
+	 where userid = 'park';
+	 
+	 --삭제된 레코드 복구
+	 insert into member select * from member as of
+	 timestamp(systimestamp-interval '15'minute)
+	 where userid = 'park';
+	 
+나) 그룹 쿼리
+  1) 그룹핑(그룹을 짓는다) : group by 절을 사용
+    -- emp 테이블에서 부서코드 단위로 부서코드 조회 (hr계정접속)  
+	select count(*),sum(sal),round(avg(sal),2)
+	from emp
+	where deptno=10;
+	
+	select deptno, count(*), sum(sal),round(avg(sal),2)
+	from emp
+	group by deptno; --group by절에 사용한 컬럼명은 select절에도 있어야 함.
+	
+	문제) 교수테이블(professor)에서 학과별(deptno)로 
+	교수들의 평균 급여(pay)를 출력해 보세요.
+	select deptno, round(avg(pay),2)
+	from professor
+	group by deptno;
+	
+	문제) 교수테이블(professor)에서 학과별, 직급별(position)로 
+	교수들의 평균 급여(pay)를 출력해 보세요.
+	select deptno, position, round(avg(pay),2)
+	from professor
+	group by deptno, position;
+	
+  2) group by절과 having절
+    가) group by절
+	  a. 특정 컬럼값이나 표현식을 단위로 집계성 데이터를 보기위해서
+	     집계함수와 함께 사용
+	  b. select절에 오는 컬럼 또는 값은 모두 group by절에 명시해야 함
+	  c. group by 절은 하나 이상의 컬럼 또는 값을 가짐
+	  d. order by절은 group by절 다음에 위치해야 함.
+	     (주의) order by 절에 오는 컬럼 또는 값은 group by절에 명시한
+		 값 이외의 값은 사용할 수 없음.
+	  e. where절은 group by절 앞에 위치함.
+    나) having절
+	  a. where절 조건 이외에 집계함수의 결과로 조건을 주고자 할 때 사용
+	  group by절과 함께 사용함.
+	  b. 일반적으로 집계함수나 상수가 사용된 조건을 명시하나 group by절에
+	  명시된 컬럼도 조건으로 사용 가능함.
+	  c. where절과 having절은 동시에 사용 가능함
+	  -- 교수의 평균 급여가 450이상인 학과와 평균급여를 출력
+	  select dname, avg(pay)
+	  from professor p, department d
+	  where p.deptno=d.deptno
+	  group by dname
+	  having avg(pay) >= 450;
+	  
+	-- sql 실행순서
+	-- from(전체레코드) => where(행 선택) => group by(선택된 행을 요약)
+	   =>having(요약 결과행 선택) => select(컬럼선택) => order by(정렬)
+	   
+다) 실습문제
+    1) 부서별 교수 중에서 이름,급여,보너스,급여총합계금액을 출력
+	(nvl()함수 사용)
+	--출력
+	부서(deptno), 이름(name), 급여(pay), 보너스(bonus), 
+	급여총합계금액sum(pay+nvl(bonus,0))
+		
+	(옵션문제) 부서별 교수 중에서 급여총액과  급여총금액(급여+보너스)이 
+	가장 높은 교수(max())와 가장 낮은교수(min())출력
+		
+	--출력
+	========================================
+	deptno | 급여총금액 | 최고급여 | 최저급여
+	========================================
+	
+	
+	2)student테이블의 birthday 컬럼을 사용하여 월별로 태어난 
+	인원수(count(*))를	출력 월을 오름차순 정렬
+	(생년월일 컬럼에서 월을 선택하기 위해서는 
+	to_char(birthday, 'MM')함수 사용)
+	  
+	
+
+	3) emp테이블에서 전체 직원에 대하여 직원의 이름과 직책, 
+	총 근무주(week)수를 구하시오.(단, 근무주수가 많은 직원부터
+	나타내고, 근무주수가 같으면 이름에 대하여 오름차순 정렬하시오.)
+	--출력
+	-----------------------
+	ename | job | 근무주수 
+	-----------------------
+	
+	
+	4) Student 테이블에서 제1전공(deptno1)이 101인 학과 학생들의
+	이름과 주민등록번호, 성별을 출력(jumin컬럼을 사용해서 7번째 숫자가
+	1,3일 경우 '남자', 2,4일 경우 '여자')로 출력
+	힌트 : 주민번호 성별처리 - substr('문자열', 자리수, 갯수)
+	--출력
+	---------------------
+	name | jumin | 성별
+	---------------------
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+
+
+
+
+	
+
+	
+	D:\2강_융합SW\숙제\20190220\이름\20190220.sql
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	 
+	 
+	 
+	 
+	 
+	 
+		 
+  

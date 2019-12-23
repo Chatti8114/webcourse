@@ -1,0 +1,284 @@
+2. SQL의 개요
+ 가. SQL이란?
+   1) Structured Query Language : 구조화된 질의 언어
+   2) SQL의 역사
+      가) 1970년대 초 IBM사의 도널드 D. 챔벌린과 레이먼드 F. 보이스가 처음 개발
+      나) IBM의 데이터베이스 관리 시스템에 저장된 데이터를 조작하거나 수신하기
+           위해 고안되었습니다.
+      다) 초기에는 SEQUEL(Structured English Query Language, 구조 영어 질의어)
+           이라는 이름으로 시작
+      라) SEQUEL은 나중에 SQL로 바뀌었는데, 그 까닭은 SEQUEL이 영국의 호커
+           시들리 항공사의 상표였기 때문
+   3) 1986 ANSI SQL 초기 버전 발표
+   4) 2011년에 최신 버전 발표
+
+  나. SQL 명령어의 종류
+   1) DQL(Data Query Language) : 데이터 질의어(query문) - select문 : 테이블 내의
+       데이터를 조회할 때 사용
+   2) DML(Data Manipulation Language) : 데이터 조작어 - insert, update, delete :
+       테이블 내의 데이터를 입력, 수정, 삭제할 때 사용
+   3) DDL(Data Definition Language) : 데이터 정의어 - create, alter, drop : 테이블
+       등의 객체를 생성, 변경, 삭제할 때 사용
+   4) TCL(Transaction Control Language) : 트랜잭션 제어어 - commit, rollback,
+        savepoint(어디서부터 롤백할지를 지정) - DML문을 DB에 저장 또는 취소할때
+       사용
+   5) DCL(Data Control Language) : 데이터 제어어 - 
+       grant(권한부여), revoke(권한회수) : DB 사용자에게 권한을 부여하거나 취소
+       할 때 사용
+
+다. PL/SQL
+     제어문(조건문, 반복문)이 들어있는 SQL로써 오라클에서 지원하는 확장된 SQL
+
+라. DQL : 데이터 질의어 (query문) - select문
+   1) 기본형식
+      select 컬럼명1, 컬럼명2,... from 테이블명
+         where 조건절 order by 정렬의 기준컬럼명[asc/desc]
+     가) 데이터베이스에서 원하는 데이터를 검색, 추출
+     나) Syntax
+         SELECT [ALL | DISTINCT] 열_리스트
+         [FROM 테이블_리스트]
+         [WHERE 조건]
+         [GROUP BY 열_리스트 [HAVING 조건 ]]
+         [ORDER BY 열_리스트 [ASC | DESC]]
+    다) 기능
+         Projection : 원하는 컬럼 선택
+            ex) select empno,ename,sal from emp;
+         Selection : 원하는 튜플(레코드) 선택
+            ex) select empno,ename,sal from emp where sal>=300;
+         Join : 두개의 테이블 결합
+         기타 : 각종 계산, 정렬, 요약
+            ex) select * from emp order by empno;
+
+   2) distinct / all
+         -distinct : 중복된 데이터를 허용하지 않음
+         -all : 중복된 데이터를 허용함(기본생략)
+         예) emp 테이블의 job 검색
+             select all job from emp;
+             select distinct job from emp;
+
+   3) order by : 정렬 - asc(오름차순, 생략가능), desc(내림차순)
+        예) emp 테이블의 sal 내림차순 정렬하기
+             select * from emp order by sal desc;
+        예) emp 테이블의 job 오름차순, sal 내림차순 정렬
+             select * from emp order by job, sal desc;
+        문제] 입사일자를 오름차순으로 정렬
+             select * from emp order by hiredate;
+        문제] 입사일자가 같을 경우, 급여를 내림차순으로 정렬
+             select * from emp order by hiredate, sal desc;
+   
+   4) alias : 별칭
+      - 기본형식 : 컬럼명 [as] 별칭
+        예) emp 테이블의 job 오름차순, sal 내림차순 ename 이름, job 직업코드,
+             sal 급여
+             select ename 이름, job 직업코드, sal 급여 from emp
+             order by job, sal desc;
+        문제] dept 테이블에서 deptno 부서코드, dname 부서이름, loc는 지역명
+             별칭을 써서 출력을 하되 deptno를 오름차순으로 출력
+
+
+
+        문제] student 테이블에서 name 이름, jumin 주민번호, tel 연락처
+             별칭을 쓰되 name을 내림차순으로 출력
+
+
+   5) where 절 : 검색에 조건을 부여함
+        예) 급여가 100보다 많고 400보다 적은 직원 검색하기(급여 내림차순)
+             select * from emp
+             where sal > 100 and sal < 400
+             order by sal desc;
+        문제] 급여가 100이상이고 급여가 400이하인 직원검색(급여 내림차순)
+             select * from emp
+             where sal between 100 and 400
+             order by sal desc;
+
+    6) 연산자의 종류
+       가) 산술연산자 : +, - , *, /
+       나) 비교연산자 : =, !=, >, >=, <, <=
+       다) 논리연산자 : and, or, not
+         예) 급여가 200이상이고 300이하가 아닌 직원의 검색(급여 내림차순)
+            select * from emp
+            where not (sal >= 200 and sal <= 300)
+            order by sal desc;
+     
+   7) SQL 연산자 : in, any, all, between, like, is null, is not null
+        예) deptno가 10,20,30인 직원의 deptno, sal, ename 출력
+            select deptno, sal, ename from emp
+            where deptno=10 or deptno=20 or deptno=30;
+       -- in(집합) 집합의 요소 중 한 개 이상이 해당되면 선택
+             select deptno, sal, ename from emp
+             where deptno in(10,20,30);
+       -- any는 in과 같으나 다양한 연산자를 사용할 수 있음
+             select deptno, sal, ename from emp
+             where deptno = any(10,20,30);
+       -- sal이 200보다 큰 직원들 출력
+             select deptno, sal, ename from emp
+             where sal > any(200,300,400);
+       [문제] any 연산자를 사용해서 sal이 300이상인 직원들 출력(급여를 내림차순)
+             select deptno, sal, ename from emp
+             where sal >= any(300) order by sal desc;
+
+       -- sal이 정확히 200 또는 300 또는 400인 직원들만 출력
+            select deptno, sal, ename from emp
+             where sal in(200,300,400) order by sal;
+
+       -- 이름이 성씨가 '성'인 사람
+            select ename from emp where ename like '성%';
+
+       -- 정확히 두번째 문자에 '철'이 들어간 사람을 찾을때
+             select ename from emp where ename like '_철%';--(_ : 1개의 문자열)
+    
+       [문제] 정확히 세번째 문자에 '호'가 들어간 사람을 찾을 때
+             select ename from emp where ename like '__호%';
+       
+        -- 커미션 null인 레코드 출력 (주의 : =을 쓰면 안된다)
+            select * from emp where comm is null;
+
+        -- 커미션이 null이 아닌 레코드(주의 : in not 대신 < >를 쓰면 안된다)
+            select * from emp where comm is not null;
+
+        -- 연봉계산시 comm이 null인 사람은 계산이 안되게 출력
+            select empno,ename,sal,comm, sal*12+comm from emp;
+
+        -- nvl(A,B) A의 값이 null이면 B, null이 아니면 A (참고:많이쓰이게되는 함수)
+            select empno,ename,sal,comm, sal*12+nvl(comm,0) 연봉 from emp;
+        --[문제] nvl함수 활용, empno 사원번호, ename 이름, sal 급여, comm 보너스,
+                 연봉을 계산하되 연봉에 대해서 오름차순 출력
+
+                 order by 연봉
+				 
+	8) 결합연산자 : ||
+        -- 결합할 내용이 날짜나 문자인 경우에는 단일따옴표(' ')를 붙임
+        -- 각 사람의 급여를 검색해서 '누구누구의 급여는 얼마입니다' 컬럼명을
+           만들어서 출력을       
+            select ename || '의 급여는 ' || sal || '입니다.' from emp;	
+
+        -- [문제] '누구누구의 연봉은 얼마입니다. 를 출력
+		
+		    select ename || '의 연봉은 ' || (sal*12+nvl(comm,0)) || '입니다.' 
+			from emp;
+		
+    9) 연산자 우선순위 괄호(): 연산자 우선순위 제일 우선순위 
+	    1. 순위 : 비교연산자, SQL연산자, 산술연산자
+		2. 순위 : not
+		3. 순위 : and
+		4. 순위 : or
+		5. 순위 : 결합연산자
+		
+	예) emp 테이블에서 입사일(hiredate)이 2005년 1월 1일 이전인 사원에 대해서
+        사원이름(ename), 입사일, 부서번호(deptno)를 출력 (입사일 오름차순으로 정렬)
+        select ename, hiredate, deptno
+		from emp
+		where hiredate < '2005-01-01'
+		order by hiredate;
+		
+	예) emp 테이블에서 부서번호가 20번 이나(또는) 30번인 부서에 속한 사원들에
+	    대해 이름, 직책(job), 부서번호를 출력 (단, ename 오름차순으로 정렬)
+		select ename, job, deptno
+		from emp
+		where deptno=20 or deptno=30
+		order by ename;
+		
+		select ename, job, deptno
+		from emp
+		where deptno in(20,30)
+		order by ename;
+		
+		
+		
+		
+		
+
+
+
+		
+		
+				 
+
+       D:\2강_융합SW\숙제\20190214\이름\20190214.sql
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        D:\2강_융합SW\숙제\20190214\이름\20190214.sql
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
