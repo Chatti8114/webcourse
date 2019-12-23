@@ -1,0 +1,39 @@
+
+import java.awt.Frame;
+import java.awt.Menu;
+import java.awt.MenuBar;
+import java.awt.MenuItem;
+
+public class MenuTest_1 extends Frame {
+    public MenuTest_1(String var1) {
+        super(var1);
+        MenuBar var2 = new MenuBar();
+        Menu var3 = new Menu("파일");
+        MenuItem var4 = new MenuItem("새파일");
+        MenuItem var5 = new MenuItem("불러오기");
+        MenuItem var6 = new MenuItem("파일닫기");
+        var3.add(var4);
+        var3.add(var5);
+        var3.add(var6);
+        Menu var7 = new Menu("편집");
+        MenuItem var8 = new MenuItem("오려두기");
+        MenuItem var9 = new MenuItem("붙이기");
+        var7.add(var8);
+        var7.add(var9);
+        Menu var10 = new Menu("실행");
+        MenuItem var11 = new MenuItem("실행");
+        MenuItem var12 = new MenuItem("디버그");
+        var10.add(var11);
+        var10.add(var12);
+        var2.add(var3);
+        var2.add(var7);
+        var2.add(var10);
+        this.setMenuBar(var2);
+        this.setSize(300, 300);
+        this.setVisible(true);
+    }
+
+    public static void main(String[] var0) {
+        new MenuTest_1("메뉴 만들기");
+    }
+}
